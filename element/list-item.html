@@ -3,22 +3,57 @@
 <polymer-element name="list-item">
 	<template>
 		<style>
-			.list-item { position: relative; padding: 0.3em; height: 2.4em; }
+			:host { display: block; position: relative; overflow: hidden; margin: 1em 0; opacity: 1; }
+			:host(:hover) .list-item { background: #f0f0f0; }
 			
-			.col.col1 { position: absolute; left: 0; top: 0; width: 3.7em; height: 100%; border: 1px solid #1a1a1a; display: table; text-align: center; }
+			:host(.collapsed) { height: 0px; transition: 0.5s all; opacity: 0; }
+			
+			.background { position: absolute; left: 0; top: 0; right: 0; bottom: 0; }
+			
+			.background .slot { position: absolute; left: 0; top: 0; right: 0; bottom: 0; opacity: 0; transition: 0.5s all; }
+			.background .slot.active { opacity: 1; }
+			
+			.background .slot.postpone { background: #ccc; }
+			.background .slot.done { background: #39b54a; }
+			
+			.list-item { background: #fafafa; position: relative; padding: 0.3em; height: 2.4em; }
+			.list-item.transition-on { transition: 0.5s all; }
+			.list-item.transparent { background: transparent; }
+			
+			.hours-1 { height: 3em; }
+			.hours-2 { height: 4.5em; }
+			.hours-3 { height: 6em; }
+			.hours-4 { height: 7.5em; }
+			
+			.col.col1 { background: #fafafa; position: absolute; left: 0; top: 0; width: 3.7em; height: 100%; border: 1px solid #1a1a1a; display: table; text-align: center; }
 			.col.col1 .hours { display: table-cell; vertical-align: middle; }
 			
 			.col.col2 { margin-left: 4em; }
 		</style>
-		<div class="list-item" on-tap="{{onTap}}">
-			<div class="col col1">
-				<div class="hours">{{hours}}</div>
-			</div>
+		<div class="background">
+			<div class="slot postpone {{moveX > 0 ? 'active' : ''}}"></div>
+			<div class="slot done {{moveX < 0 ? 'active' : ''}}"></div>
+		</div>
+		<div class="list-item hours-{{hours}} transparent" style="display: {{showSwipeStatus ? 'block' : 'none'}};">
 			<div class="col col2">
-				<div class="caption">{{caption}}</div>
-				<div class="text">{{text}}</div>
+				<div id="messageArea" class="text"></div>
 			</div>
 		</div>
+		<template if="{{!showSwipeStatus}}">
+			<div on-tap="{{onTap}}" touch-action="pan-y" 
+				 on-trackstart="{{onTrackStart}}" on-trackend="{{onTrackEnd}}" on-track="{{trackPointer}}" 
+				 style="transform: translateX({{moveX}}px)"
+				 class="list-item hours-{{hours}} transition-{{pointerDown ? 'off' : 'on'}}" >
+
+				<div class="col col1">
+					<div class="hours">{{hours}}</div>
+				</div>
+				<div class="col col2">
+					<div class="caption">{{caption}}</div>
+					<div class="text">{{text}}</div>
+				</div>
+			</div>
+		</template>
 	</template>
 	<script>
 		(function(app) {
@@ -29,14 +64,98 @@
 					caption: "",
 					text: "",
 					hours: 0,
-					href: null
+					href: null,
+					item: null,
+					onPostpone: function(item) {},
+					onDone: function(item) {}
 				},
 				
-				onTap: function() {
-					console.log(this.href);
+				showSwipeStatus: false,
+				
+				pointerDown: false,
+				moveX: 0,
+				
+				onTap: function(evt) {
+					if (this.pointerDown) {
+						evt.preventDefault();
+						return false;
+					}
 					if (this.href != null) {
 						app.route.open(this.href);
 					}
+				},
+				
+				trackPointer: function(evt) {
+					evt.preventDefault();
+					this.moveX = evt.dx;
+				},
+				
+				onTrackStart: function(evt) {
+					evt.preventDefault();
+					this.pointerDown = true;
+				},
+				
+				onTrackEnd: function(evt) {
+					evt.preventDefault();
+					var self = this;
+					setTimeout(function() {
+						var treshold = self.offsetWidth * 0.7;
+						if (self.moveX > treshold) self.doPostpone();
+						else if (self.moveX < -treshold) self.doDone();
+						else self.doCancel();
+					}, 100);
+				},
+				
+				doCancel: function() {
+					this.showSwipeStatus = false;
+					this.pointerDown = false;
+					this.moveX = 0;
+				},
+				
+				doPostpone: function() {
+					var self = this;
+					this.pointerDown = false;
+					this.moveX = 9999;
+					this.onPostpone(this.item, function() {
+						self.showMessage.apply(self, arguments);
+					});
+				},
+				
+				doDone: function() {
+					var self = this;
+					this.pointerDown = false;
+					this.moveX = -9999;
+					this.onDone(this.item, function() {
+						self.showMessage.apply(self, arguments);
+					});
+				},
+				
+				/**
+				 * obj = { success: boolean, message: string }
+				 */
+				showMessage: function(obj) {
+					var self = this;
+					if (obj.success) {
+						setTimeout(function() {
+							self.collapse();
+						}, 1000);
+					}
+					else {
+						setTimeout(function() {
+							self.doCancel();
+						}, 7000);
+					}
+					this.injectBoundHTML(obj.message, this.$.messageArea);
+					this.showSwipeStatus = true;
+				},
+				
+				collapse: function() {
+					var self = this;
+					this.style.height = this.offsetHeight + "px";
+					this.classList.add("collapsed");
+					setTimeout(function() {
+						self.style.height = "0px";
+					}, 100);
 				}
 				
 			});

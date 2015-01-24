@@ -5,17 +5,33 @@
 <polymer-element name="view-main">
 	<template>
 		<template repeat="{{item in items}}">
-			<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" href="/todos/{{item.id}}"></list-item>
+			<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}" 
+					   item="{{item}}" onPostpone="{{savePostpone}}" onDone="{{saveDone}}"></list-item>
 		</template>
 	</template>
 	<script>
-		(function() {
+		(function(app) {
+			
+			function isDateToday(dateString) {
+				var date = new Date(dateString);
+				var today = new Date();
+				return ((date.getDate() + date.getMonth() + date.getYear()) <= 
+					    (today.getDate() + today.getMonth() + today.getYear()));
+			}
 			
 			Polymer({
 								
 				created: function() {
 					var self = this;
 					this.items = [];
+					
+					this.savePostpone = function() {
+						self.savePostpone_.apply(self, arguments);
+					};
+					
+					this.saveDone = function() {
+						self.saveDone_.apply(self, arguments);
+					};
 					
 					window.TodAi.db.todo.listTodaysTasks(function(err, resp) {
 						if (err) {
@@ -26,8 +42,45 @@
 					});
 				},
 				
+				savePostpone_: function(item, callback) {
+					app.db.todo.get(item.id, function(err, resp) {
+						if (err) {
+							
+						}
+						else if (isDateToday(resp.deadline)) {
+							callback({
+								success: false,
+								message: "Hey! You can’t remove " + item.value.caption + " from today’s list. " + 
+									"Due is tomorrow and you don’t have any other time to do it.<br><br>" + 
+									"Dude, just do it."
+							});
+						}
+						else {
+							callback({
+								success: true,
+								message: "<i>" + item.value.caption + "</i> postponed."
+							});
+						}
+					});
+				},
+				
+				saveDone_: function(item, callback) {
+					var self = this;
+					app.db.todo.updateUsedHours(item.id, -item.value.hours, function(err, resp) {
+						if (err) {
+						}
+						else {
+							callback({
+								success: true,
+								message: "Great! <i>" + item.value.caption + "</i> done.<br><br>" + 
+									(self.items.length - 1) + " more tasks for today."
+							});
+						}
+					});
+				}
+				
 			});
 			
-		})();
+		})(window.TodAi);
 	</script>
 </polymer-element>

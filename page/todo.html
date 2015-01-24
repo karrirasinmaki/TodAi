@@ -11,7 +11,7 @@
 			#todo-view { position: absolute; left: 10%; top: 0; right: 0; bottom: 0; padding: 0.4em; background: #fafafa; border: 2px solid #00a99d; }
 		</style>
 		<div id="todo-view">
-			<form on-submit="{{saveItem}}">
+			<form id="theform" on-submit="{{preventSubmit}}">
 				<div class="input-row">
 					<label>Caption</label>
 					<input type="text" value="{{item.caption}}" placeholder="Caption">
@@ -35,12 +35,17 @@
 				<div class="input-row">
 					<label>Repeat</label>
 					<select value="{{item.repeat}}">
+						<option value=0>No repeat</option>
 						<option value=1>Every day</option>
+						<option value=2>Every second day</option>
+						<option value=4>Twice a week</option>
 						<option value=7>Once a week</option>
+						<option value=14>Every second week</option>
+						<option value=31>Monthly</option>
 					</select>
 				</div>
 				<div>
-					<button type="submit">Save</button>
+					<add-new-task text="{{item._id ? 'Save task' : 'Add new task +'}}" on-tap="{{saveItem}}"></add-new-task>
 				</div>
 			</form>
 		</div>
@@ -58,6 +63,10 @@
 					var self = this;
 					
 					this.item = new window.TodAi.Todo();
+				},
+				
+				preventSubmit: function(evt) {
+					evt.preventDefault();
 				},
 				
 				saveItem: function() {

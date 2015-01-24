@@ -1,5 +1,7 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
-		
+
+<link rel="import" href="add-new-task.html">
+
 <polymer-element name="x-header">
 	<template>
 		<style>
@@ -12,9 +14,6 @@
 			.logo img { height: 100%; width: auto; }
 			
 			.col.add-new { width: 90%; }
-			
-			#add-new-task { border: 2px solid #00a99d; color: #00a99d; box-sizing: border-box; height: 100%; text-align: center; }
-			#add-new-task .col { height: 100%; font-size: 1.48em; vertical-align: middle; }
 		</style>
 		<div class="header">
 			<div class="row">
@@ -22,9 +21,7 @@
 					<img src="../img/logo.svg" alt="logo">
 				</div>
 				<div class="col add-new">
-					<div id="add-new-task" class="row" on-tap="{{openNewTask}}">
-						<span class="col">Add new task +</span>
-					</div>
+					<add-new-task on-tap="{{openNewTask}}"></add-new-task>
 				</div>
 			</div>
 		</div>

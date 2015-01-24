@@ -49,6 +49,7 @@
 					
 					app.route
 					.when("/todos/new/", function(id) {
+						self.todo = null;
 						self.setPage("todo");
 					})
 					.when("/todos/{id}/", function(id) {

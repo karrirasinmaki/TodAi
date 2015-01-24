@@ -1,6 +1,6 @@
 {
   "name": "ss15-hnrc",
-  "root": "./public",
+  "root": "./",
   "clean_urls": true,
   "error_page": "error.html"
 }

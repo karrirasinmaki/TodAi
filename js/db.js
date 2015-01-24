@@ -86,6 +86,19 @@
 			}
 		},
 		
+		updateUsedHours: function(id, delta, callback) {
+			var self = this;
+			this.get(id, function(err, resp) {
+				if (err) {
+					callback(err, resp);
+				}
+				else {
+					resp.usedHours += delta;
+					self.save(resp, callback);
+				}
+			});
+		},
+		
 		get: function(id, callback) {
 			db.get(id, callback);
 		},

@@ -5,7 +5,7 @@
 <polymer-element name="view-main">
 	<template>
 		<template repeat="{{item in items}}">
-			<list-item title="{{item.value.caption}}" text="{{item.value.description}}" href="/todos/{{item.id}}"></list-item>
+			<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" href="/todos/{{item.id}}"></list-item>
 		</template>
 	</template>
 	<script>
@@ -17,7 +17,7 @@
 					var self = this;
 					this.items = [];
 					
-					window.TodAi.db.todo.list(function(err, resp) {
+					window.TodAi.db.todo.listTodaysTasks(function(err, resp) {
 						if (err) {
 							throw err;
 						}

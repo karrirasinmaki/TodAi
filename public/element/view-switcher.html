@@ -19,7 +19,6 @@
 				<view-todo item="{{todo}}"></view-todo>
 			</template>
 		</div>
-		<plus-button on-tap="{{onTapPlusButton}}"></plus-button>
 	</template>
 	<script>
 		(function() {
@@ -72,10 +71,6 @@
 				created: function() {
 					this.todo = new window.TodAi.Todo();
 					app.route.listen(this.onRouteChange, this);
-				},
-				
-				onTapPlusButton: function(evt, detail, sender) {
-					app.route.open("/todos/new");
 				}
 				
 			});

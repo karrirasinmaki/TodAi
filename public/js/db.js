@@ -20,10 +20,10 @@
 	
 	var db;
 	if (app.currentProfile == "test") {
-		db = new PouchDB('todai-test');
+		db = new PouchDB("todai-test");
 	}
 	else {
-		db = new PouchDB('todai');
+		db = new PouchDB("todai");
 	}
 	
 	/**
@@ -45,7 +45,6 @@
 	 * _id field.
 	 */
 	function requireId(doc) {
-		doc._id = doc.id;
 		if (!doc._id) {
 			throw "Id cannot be null";
 		}
@@ -66,7 +65,7 @@
 		TYPE: "todo",
 		
 		create: function(doc, callback) {
-			doc._id = undefined;
+			delete doc._id;
 			doc.type = todo.TYPE;
 			db.post(doc, callback);
 		},
@@ -104,6 +103,35 @@
 				}
 			}
 			db.query({map: map}, {reduce: false}, callback);
+		},
+		
+		listTodaysTasks: function(callback) {
+			function map(doc) {
+				if (doc.type === "todo") {
+					emit(doc._id, {
+						caption: doc.caption, 
+						description: doc.description,
+						hours: Math.max(doc.estimateHours, 4)
+					});
+				}
+			}
+			db.query({map: map}, {reduce: false, limit: 4}, function(err, resp) {
+				if (err) {
+					callback(err, resp);
+					return;
+				}
+				var totalHours = 0;
+				for (var i = 0, l = resp.rows.length; i < l; ++i) {
+					var row = resp.rows[i];
+					if (totalHours > 8) {
+						delete resp.rows[i];
+					}
+					else {
+						totalHours += row.value.hours;
+					}
+				}
+				callback(err, resp);
+			});
 		}
 		
 	};

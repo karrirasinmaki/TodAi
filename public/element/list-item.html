@@ -6,7 +6,7 @@
 			.list-item { padding: 0.3em; height: 2.4em; border: 1px solid #c0c0c0; }
 		</style>
 		<div class="list-item" on-tap="{{onTap}}">
-			<div class="title">{{title}}</div>
+			<div class="caption">{{caption}}</div>
 			<div class="text">{{text}}</div>
 		</div>
 	</template>
@@ -16,7 +16,7 @@
 			Polymer({
 				
 				publish: {
-					title: "",
+					caption: "",
 					text: "",
 					href: null
 				},

@@ -3,15 +3,23 @@
 	<head>
 		<title>TodAi</title>
 		
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
+		
 		<!-- libs -->
 		<script src="node_modules/pouchdb/dist/pouchdb.min.js"></script>
 		<script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
 		
 		<!-- commons -->
-		<script>window.TodAi = {};</script>
+		<script>
+			window.TodAi = {
+				currentProfile: "dev"
+			};
+		</script>
+		
+		<script src="js/db.js"></script>
 		
 		<script src="js/routing.js"></script>
-		<script src="js/db.js"></script>
 		<script src="js/category.js"></script>
 		<script src="js/todo.js"></script>
 		
@@ -19,17 +27,26 @@
 		<link rel="import" href="element/view-switcher.html">
 		
 		<style>
-			#page { position: relative; max-width: 720px; margin: 0 auto; }
+			html, body, #page, #page-inner { height: 100%; }
+			
+			body { background: #fafafa; margin: 0; }
+			
+			#page { max-width: 720px; margin: 0 auto; padding: 1em; box-sizing: border-box; }
+			
+			#page-inner { position: relative; }
 
 			@media screen and (min-width: 720px) {
-				#page { border: 1px solid #c0c0c0; border-radius: 3px; height: 90vh; }
+				#page { border: 1px solid #c0c0c0; border-radius: 3px; }
+				#page-inner { height: 90vh; }
 			}
 		</style>
 	</head>
 	<body>
 		
 		<div id="page">
-			<view-switcher id="switcher"></view-switcher>
+			<div id="page-inner">
+				<view-switcher id="switcher"></view-switcher>
+			</div>
 		</div>
 		
 		<script>

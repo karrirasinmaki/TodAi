@@ -2,38 +2,48 @@
 
 <polymer-element name="view-todo">
 	<template>
-		<form on-submit="{{saveItem}}">
-			<div>
-				<label>Caption</label>
-				<input type="text" value="{{item.caption}}">
-			</div>
-			<div>
-				<label>Description</label>
-				<textarea rows="2">{{item.description}}</textarea>
-			</div>
-			<div>
-				<label>Notes</label>
-				<textarea rows="5">{{item.notes}}</textarea>
-			</div>
-			<div>
-				<label>Deadline</label>
-				<input type="date" value="{{item.deadline}}">
-			</div>
-			<div>
-				<label>Hour budget</label>
-				<input type="number" value="{{item.estimateHours}}">
-			</div>
-			<div>
-				<label>Repeat</label>
-				<select value="{{item.repeat}}">
-					<option value=1>Every day</option>
-					<option value=7>Once a week</option>
-				</select>
-			</div>
-			<div>
-				<button on-tap="{{saveItem}}">Save</button>
-			</div>
-		</form>
+		<style>
+			label { display: block; }
+			
+			input, textarea, select { width: 100%; box-sizing: border-box; padding: 0.3em 0.2em; border: 2px solid #00a99d; }
+			.input-row { margin: 1em 0; }
+			
+			#todo-view { position: absolute; left: 10%; top: 0; right: 0; bottom: 0; padding: 0.4em; background: #fafafa; border: 2px solid #00a99d; }
+		</style>
+		<div id="todo-view">
+			<form on-submit="{{saveItem}}">
+				<div class="input-row">
+					<label>Caption</label>
+					<input type="text" value="{{item.caption}}" placeholder="Caption">
+				</div>
+				<div class="input-row">
+					<label>Description</label>
+					<textarea rows="2" placeholder="Description" value="{{item.description}}"></textarea>
+				</div>
+				<div class="input-row">
+					<label>Notes</label>
+					<textarea rows="5" placeholder="Notes" value="{{item.notes}}"></textarea>
+				</div>
+				<div class="input-row">
+					<label>Deadline</label>
+					<input type="date" value="{{item.deadline}}" placeholder="Deadline">
+				</div>
+				<div class="input-row">
+					<label>Hour budget</label>
+					<input type="number" value="{{item.estimateHours}}" placeholder="Hour budget">
+				</div>
+				<div class="input-row">
+					<label>Repeat</label>
+					<select value="{{item.repeat}}">
+						<option value=1>Every day</option>
+						<option value=7>Once a week</option>
+					</select>
+				</div>
+				<div>
+					<button type="submit">Save</button>
+				</div>
+			</form>
+		</div>
 	</template>
 	<script>
 		(function() {
@@ -48,13 +58,6 @@
 					var self = this;
 					
 					this.item = new window.TodAi.Todo();
-					
-					window.TodAi.db.todo.get(this.item.id, function(err, resp) {
-						if (err) {
-							throw err;
-						}
-						self.item = resp;
-					});
 				},
 				
 				saveItem: function() {

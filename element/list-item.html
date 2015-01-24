@@ -20,10 +20,10 @@
 			.list-item.transition-on { transition: 0.5s all; }
 			.list-item.transparent { background: transparent; }
 			
-			.hours-1 { height: 3em; }
-			.hours-2 { height: 4.5em; }
-			.hours-3 { height: 6em; }
-			.hours-4 { height: 7.5em; }
+			.hours-1 { min-height: 3em; }
+			.hours-2 { min-height: 4.5em; }
+			.hours-3 { min-height: 6em; }
+			.hours-4 { min-height: 7.5em; }
 			
 			.col.col1 { background: #fafafa; position: absolute; left: 0; top: 0; width: 3.7em; height: 100%; border: 1px solid #1a1a1a; display: table; text-align: center; }
 			.col.col1 .hours { display: table-cell; vertical-align: middle; }
@@ -99,7 +99,7 @@
 					evt.preventDefault();
 					var self = this;
 					setTimeout(function() {
-						var treshold = self.offsetWidth * 0.7;
+						var treshold = self.offsetWidth * 0.56;
 						if (self.moveX > treshold) self.doPostpone();
 						else if (self.moveX < -treshold) self.doDone();
 						else self.doCancel();

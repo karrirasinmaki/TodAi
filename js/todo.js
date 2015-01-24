@@ -8,8 +8,10 @@
 		this.notes = "";
 		this.deadline = new Date();
 		this.estimateHours = 0;
-		this.usedHours = 0;
 		this.repeat = Todo.Repeat.NO_REPEAT;
+		
+		this.usedHours = 0;
+		this.showDate = 0; //new Date();
 		
 		this.categoryId = app.Category.Id.WORK;
 	}

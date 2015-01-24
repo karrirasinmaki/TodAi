@@ -8,6 +8,13 @@
 			<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}" 
 					   item="{{item}}" onPostpone="{{savePostpone}}" onDone="{{saveDone}}"></list-item>
 		</template>
+		<template if="{{items.length == 0}}">
+			<p>
+				Seems today's tasks is done! Get yourself some rest or 
+				get more tasks.
+			</p>
+			<a href="#" on-tap="{{fetchNewTodaysTaskList}}">Give me more!</a>
+		</template>
 	</template>
 	<script>
 		(function(app) {
@@ -33,12 +40,35 @@
 						self.saveDone_.apply(self, arguments);
 					};
 					
-					window.TodAi.db.todo.listTodaysTasks(function(err, resp) {
+					this.fetchTodaysTaskList();
+				},
+				
+				/**
+				 * Fetch today's tasklist.
+				 */
+				fetchTodaysTaskList: function() {
+					var self = this;
+					app.db.todo.listTodaysTasks(function(err, resp) {
 						if (err) {
 							throw err;
 						}
 						self.items = resp.rows;
 						console.log(self.items);
+					});
+				},
+				
+				/**
+				 * Request new collection of tasks for today.
+				 */
+				fetchNewTodaysTaskList: function(evt) {
+					evt.preventDefault();
+					var self = this;
+					app.db.todo.requestNewTodaysTaskList(function(err, resp) {
+						if (err) {
+							throw err;
+						}
+						console.log(resp);
+						self.fetchTodaysTaskList();
 					});
 				},
 				

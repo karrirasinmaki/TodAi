@@ -1,0 +1,35 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<polymer-element name="list-item">
+	<template>
+		<style>
+			.list-item { padding: 0.3em; height: 2.4em; border: 1px solid #c0c0c0; }
+		</style>
+		<div class="list-item" on-tap="{{onTap}}">
+			<div class="title">{{title}}</div>
+			<div class="text">{{text}}</div>
+		</div>
+	</template>
+	<script>
+		(function(app) {
+			
+			Polymer({
+				
+				publish: {
+					title: "",
+					text: "",
+					href: null
+				},
+				
+				onTap: function() {
+					console.log(this.href);
+					if (this.href != null) {
+						app.route.open(this.href);
+					}
+				}
+				
+			});
+			
+		})(window.TodAi);
+	</script>
+</polymer-element>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>TodAi</title>
+		
+		<!-- libs -->
+		<script src="../public/node_modules/pouchdb/dist/pouchdb.min.js"></script>
+		
+		<!-- commons -->
+		<script>
+			window.TodAi = {
+				currentProfile: "test",
+				test: {}
+			};
+		</script>
+		
+		<script src="../public/js/db.js"></script>
+		<script src="../public/js/category.js"></script>
+		<script src="../public/js/todo.js"></script>
+		
+		<script src="test-todo.js"></script>
+	</head>
+	<body>
+		<script>
+			(function(app) {
+				
+				console.info("Running tests...");
+				
+				var totalTests = 0;
+
+				var passed = [];
+				var failed = [];
+				
+				var db = app.db;
+				var Todo = app.Todo;
+				
+				function getFunctionName(fn) {
+					var ret = fn.toString();
+					ret = ret.substr('function '.length);
+					ret = ret.substr(0, ret.indexOf('('));
+					return ret;
+				}
+				
+				function fail(fn, message) {
+					var fnName = getFunctionName(fn);
+					failed.push(fnName);
+					console.warn("Test fail: " + fnName);
+					console.warn(message);
+				}
+				
+				function pass(fn) {
+					var fnName = getFunctionName(fn);
+					passed.push(fnName);
+					console.info("Test pass: " + fnName);
+				}
+				
+				function runTest(fn, args) {
+					totalTests++;
+					
+					var fnName = getFunctionName(fn);
+					console.info("Running test: " + fnName);
+					
+					if (args == undefined) {
+						args = [];
+					}
+					else if (args != undefined) {
+						args = ([]).concat(args);
+					}
+					
+					fn.apply(this, args.concat([pass, fail, runTest]));
+				}
+				
+				function endTests() {
+					var totalPassed = passed.length;
+					var totalFailed = failed.length;
+
+					function checkTestsReady(callback) {
+						totalPassed = passed.length;
+						totalFailed = failed.length;
+						if (totalPassed + totalFailed < totalTests) {
+							setTimeout(function() {
+								checkTestsReady(callback);
+							}, 1000);
+							return;
+						}
+						callback();
+					}
+
+					checkTestsReady(function() {
+						console.info("Test run summary:");
+						console.info("  Passed " + totalPassed + "/" + totalTests);
+						console.info("  Failed " + totalFailed + "/" + totalTests);
+
+						db.destroy();
+					});
+				}
+				
+				runTest(app.test.testCreateTodo);
+				endTests();
+				
+			})(window.TodAi);
+		</script>
+	</body>
+</html>

@@ -1,0 +1,73 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<polymer-element name="view-todo">
+	<template>
+		<form on-submit="{{saveItem}}">
+			<div>
+				<label>Caption</label>
+				<input type="text" value="{{item.caption}}">
+			</div>
+			<div>
+				<label>Description</label>
+				<textarea rows="2">{{item.description}}</textarea>
+			</div>
+			<div>
+				<label>Notes</label>
+				<textarea rows="5">{{item.notes}}</textarea>
+			</div>
+			<div>
+				<label>Deadline</label>
+				<input type="date" value="{{item.deadline}}">
+			</div>
+			<div>
+				<label>Hour budget</label>
+				<input type="number" value="{{item.estimateHours}}">
+			</div>
+			<div>
+				<label>Repeat</label>
+				<select value="{{item.repeat}}">
+					<option value=1>Every day</option>
+					<option value=7>Once a week</option>
+				</select>
+			</div>
+			<div>
+				<button on-tap="{{saveItem}}">Save</button>
+			</div>
+		</form>
+	</template>
+	<script>
+		(function() {
+			
+			Polymer({
+				
+				publish: {
+					item: null
+				},
+								
+				created: function() {
+					var self = this;
+					
+					this.item = new window.TodAi.Todo();
+					
+					window.TodAi.db.todo.get(this.item.id, function(err, resp) {
+						if (err) {
+							throw err;
+						}
+						self.item = resp;
+					});
+				},
+				
+				saveItem: function() {
+					window.TodAi.db.todo.save(this.item, function(err, resp) {
+						if (err) {
+							return;
+						}
+						console.log(resp);
+					});
+				}
+				
+			});
+			
+		})();
+	</script>
+</polymer-element>

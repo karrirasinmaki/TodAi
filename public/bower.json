@@ -1,0 +1,30 @@
+{
+  "name": "TodAi",
+  "version": "0.0.1",
+  "homepage": "https://github.com/staticshowdown/ss15-hnrc",
+  "authors": [
+    "karrirasinmaki <karri.rasinmaki@gmail.com>"
+  ],
+  "description": "Todo list with intelligence",
+  "keywords": [
+    "todo",
+    "app",
+    "mobile",
+    "web",
+    "ai",
+    "intelligence",
+    "artificial"
+  ],
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "polymer": "Polymer/polymer#~0.5.4"
+  }
+}

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>TodAi</title>
+		
+		<!-- libs -->
+		<script src="node_modules/pouchdb/dist/pouchdb.min.js"></script>
+		<script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
+		
+		<!-- commons -->
+		<script>window.TodAi = {};</script>
+		
+		<script src="js/routing.js"></script>
+		<script src="js/db.js"></script>
+		<script src="js/category.js"></script>
+		<script src="js/todo.js"></script>
+		
+		<!-- elements -->
+		<link rel="import" href="element/view-switcher.html">
+		
+		<style>
+			#page { position: relative; max-width: 720px; margin: 0 auto; }
+
+			@media screen and (min-width: 720px) {
+				#page { border: 1px solid #c0c0c0; border-radius: 3px; height: 90vh; }
+			}
+		</style>
+	</head>
+	<body>
+		
+		<div id="page">
+			<view-switcher id="switcher"></view-switcher>
+		</div>
+		
+		<script>
+			(function() {
+				
+				var switcher = document.querySelector("#switcher");
+				
+			})();
+		</script>
+		
+	</body>
+</html>

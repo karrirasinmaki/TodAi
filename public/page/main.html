@@ -1,0 +1,33 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<link rel="import" href="../element/list-item.html">
+
+<polymer-element name="view-main">
+	<template>
+		<template repeat="{{item in items}}">
+			<list-item title="{{item.value.caption}}" text="{{item.value.description}}" href="/todos/{{item.id}}"></list-item>
+		</template>
+	</template>
+	<script>
+		(function() {
+			
+			Polymer({
+								
+				created: function() {
+					var self = this;
+					this.items = [];
+					
+					window.TodAi.db.todo.list(function(err, resp) {
+						if (err) {
+							throw err;
+						}
+						self.items = resp.rows;
+						console.log(self.items);
+					});
+				},
+				
+			});
+			
+		})();
+	</script>
+</polymer-element>

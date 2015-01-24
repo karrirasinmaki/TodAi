@@ -1,0 +1,85 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+<link rel="import" href="../bower_components/core-ajax/core-ajax.html">
+
+<link rel="import" href="x-header.html">
+<link rel="import" href="plus-button.html">
+
+<link rel="import" href="../page/main.html">
+<link rel="import" href="../page/todo.html">
+		
+<polymer-element name="view-switcher">
+	<template>
+		<link rel="stylesheet" href="../css/view-switcher.css">
+		<x-header title="{{page.title}}"></x-header>
+		<div id="main">
+			<template if="{{page.name == 'view-main'}}">
+				<view-main></view-main>
+			</template>
+			<template if="{{page.name == 'view-todo'}}">
+				<view-todo item="{{todo}}"></view-todo>
+			</template>
+		</div>
+		<plus-button on-tap="{{onTapPlusButton}}"></plus-button>
+	</template>
+	<script>
+		(function() {
+			
+			var app = window.TodAi;
+			
+			var pages_ = {
+				"main": {
+					name: "view-main",
+					title: "TodAi"
+				},
+				"todo": {
+					name: "view-todo",
+					title: "new Todo item"
+				}
+			};
+			
+			Polymer({
+				
+				page: null,
+				
+				setPage: function(pageName) {
+					this.page = pages_[pageName];
+				},
+				
+				onRouteChange: function() {
+					var self = this;
+					
+					app.route
+					.when("/todos/new/", function(id) {
+						self.setPage("todo");
+					})
+					.when("/todos/{id}/", function(id) {
+						app.db.todo.get(id, function(err, resp) {
+							if (err) {
+								console.warn(err);	
+							}
+							else {
+								console.log(resp);
+								self.todo = resp;
+							}
+						});
+						self.setPage("todo");
+					})
+					.when(true, function() {
+						self.setPage("main");
+					});
+				},
+				
+				created: function() {
+					this.todo = new window.TodAi.Todo();
+					app.route.listen(this.onRouteChange, this);
+				},
+				
+				onTapPlusButton: function(evt, detail, sender) {
+					app.route.open("/todos/new");
+				}
+				
+			});
+			
+		})();
+	</script>
+</polymer-element>

@@ -111,7 +111,7 @@
 					emit(doc._id, {
 						caption: doc.caption, 
 						description: doc.description,
-						hours: Math.max(doc.estimateHours, 4)
+						hours: Math.min(doc.estimateHours, 4)
 					});
 				}
 			}

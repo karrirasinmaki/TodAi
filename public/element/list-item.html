@@ -3,11 +3,21 @@
 <polymer-element name="list-item">
 	<template>
 		<style>
-			.list-item { padding: 0.3em; height: 2.4em; border: 1px solid #c0c0c0; }
+			.list-item { position: relative; padding: 0.3em; height: 2.4em; }
+			
+			.col.col1 { position: absolute; left: 0; top: 0; width: 3.7em; height: 100%; border: 1px solid #1a1a1a; display: table; text-align: center; }
+			.col.col1 .hours { display: table-cell; vertical-align: middle; }
+			
+			.col.col2 { margin-left: 4em; }
 		</style>
 		<div class="list-item" on-tap="{{onTap}}">
-			<div class="caption">{{caption}}</div>
-			<div class="text">{{text}}</div>
+			<div class="col col1">
+				<div class="hours">{{hours}}</div>
+			</div>
+			<div class="col col2">
+				<div class="caption">{{caption}}</div>
+				<div class="text">{{text}}</div>
+			</div>
 		</div>
 	</template>
 	<script>
@@ -18,6 +28,7 @@
 				publish: {
 					caption: "",
 					text: "",
+					hours: 0,
 					href: null
 				},
 				

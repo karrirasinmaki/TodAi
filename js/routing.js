@@ -49,7 +49,6 @@
 		notifyListeners: function() {
 			for (var i = 0, l = this.listeners.length; i < l; ++i) {
 				var listener = this.listeners[i];
-				console.log(listener);
 				listener.fn.call(listener.context, this.hashBefore, this.hashNow);
 			}
 		},
@@ -57,7 +56,6 @@
 		startListener__: function(fn, context) {
 			var self = this;
 			window.addEventListener("hashchange", function() {
-			console.log(self);
 				self.hashBefore = self.hashNow;
 				self.hashNow = trimPath(location.hash);
 				self.notifyListeners();

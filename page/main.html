@@ -53,7 +53,6 @@
 							throw err;
 						}
 						self.items = resp.rows;
-						console.log(self.items);
 					});
 				},
 				
@@ -67,7 +66,6 @@
 						if (err) {
 							throw err;
 						}
-						console.log(resp);
 						self.fetchTodaysTaskList();
 					});
 				},

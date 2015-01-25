@@ -1,6 +1,6 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 
-<polymer-element name="list-item">
+<polymer-element name="list-item" touch-action="pan-y">
 	<template>
 		<style>
 			:host { display: block; position: relative; overflow: hidden; margin: 1em 0; opacity: 1; }
@@ -45,7 +45,7 @@
 			</div>
 		</div>
 		<template if="{{!showSwipeStatus}}">
-			<div on-tap="{{onTap}}" touch-action="pan-x" 
+			<div on-tap="{{onTap}}" touch-action="pan-y" 
 				 on-trackstart="{{onTrackStart}}" on-trackend="{{onTrackEnd}}" on-track="{{trackPointer}}" 
 				 style="transform: translateX({{moveX}}px)"
 				 class="list-item hours-{{hours}} transition-{{pointerDown ? 'off' : 'on'}}" >

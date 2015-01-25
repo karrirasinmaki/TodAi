@@ -251,8 +251,10 @@
 		
 		list: function(callback) {
 			function map(doc) {
+				var hoursLeft = (doc.estimateHours || 0) - (doc.usedHours || 0);
+				var isDone = (hoursLeft <= 0);
 				if (doc.type === "todo") {
-					emit(doc._id, window.TodAi.db.todo.getListObject(doc));
+					emit([isDone, doc._id], window.TodAi.db.todo.getListObject(doc));
 				}
 			}
 			db.query({map: map}, {reduce: false}, callback);

@@ -75,11 +75,21 @@
 	}
 	window.TodAi.tasksDailyHours = tasksDailyHours;
 	
+	/**
+	 * Is it time for day change?
+	 *
+	 * Rule:
+	 *   there is no date record || 
+	 *   date of list < today &&
+	 *   (task list is empty || today it's over 5am)
+	 */
 	function isItTimeForDayChange(dateOfListDoc, callback) {
-		if (dateToday() > dateToday(dateOfListDoc.date)) {
+		if (dateToday() <= dateToday(dateOfListDoc.date)) {
 			callback(false);
 			return;
 		}
+		// If it is not 5am yet, check if there is 
+		// tasks left for today
 		if ((new Date()).getHours() < 5) {
 			todo.listTodaysTasks(function(err, resp) {
 				if (err) {
@@ -101,6 +111,17 @@
 	todo = {
 		
 		TYPE: "todo",
+		
+		getListObject: function(doc) {
+			return {
+				caption: doc.caption, 
+				description: doc.description,
+				deadline: doc.deadline,
+				estimateHours: doc.estimateHours,
+				usedHours: doc.usedHours, 
+				repeat: doc.repeat
+			};
+		},
 		
 		create: function(doc, callback) {
 			delete doc._id;
@@ -164,13 +185,7 @@
 		list: function(callback) {
 			function map(doc) {
 				if (doc.type === "todo") {
-					emit(doc._id, {
-						caption: doc.caption, 
-						description: doc.description,
-						deadline: doc.deadline,
-						estimateHours: doc.estimateHours,
-						usedHours: doc.usedHours
-					});
+					emit(doc._id, window.TodAi.db.todo.getListObject(doc));
 				}
 			}
 			db.query({map: map}, {reduce: false}, callback);
@@ -199,6 +214,7 @@
 				}
 				else {
 					isItTimeForDayChange(resp, function(bool) {
+						console.log("Time for new date list?" + bool);
 						if (bool) {
 							resp.date = dateToday();
 							returnNewDay();
@@ -218,7 +234,7 @@
 					resp = {_id: id, date: dateToday()};
 				}
 				resp.date = dateToday();
-				db.put(resp, function() {
+				db.put(resp, function(err, resp) {
 					resp.isNewDay = true;
 					callback(null, resp);
 				});
@@ -272,16 +288,11 @@
 			}
 			function map(doc) {
 				var hours = doc.dailyHours;
-				console.log(doc.showDate);
-				if (doc.type === "todo" && doc.showDate != 0) {
-					emit([doc.deadline, hours], {
-						caption: doc.caption, 
-						description: doc.description,
-						deadline: doc.deadline,
-						estimateHours: doc.estimateHours,
-						usedHours: doc.usedHours,
-						hours: hours
-					});
+				if (doc.type === "todo" && doc.showDate != 0 &&
+				    window.TodAi.dateToday(doc.showDate) <= window.TodAi.dateToday()) {
+					var listObj = window.TodAi.db.todo.getListObject(doc);
+					listObj.hours = hours;
+					emit([doc.deadline, hours], listObj);
 				}
 			}
 			db.query({map: map}, {reduce: false, limit: 4}, function(err, resp) {
@@ -292,25 +303,19 @@
 		/**
 		 * List today's tasks.
 		 */
-		listWeeksTasks: function(callback, skipDateCheck) {
+		listWeeksTasks: function(callback) {
 			var self = this;
-			if (!skipDateCheck) {
-				this.dateOfList(function() {
-					self.listTodaysTasks(callback, true);
-				});
-				return;
-			}
 			function map(doc) {
-				var hours = doc.dailyHours;
-				
-				if (doc.type === "todo" && doc.showDate != 0 && 
-					window.TodAi.dateToday(doc.showDate) <= new Date(window.TodAi.dateToday() + window.TodAi.datesInMilliseconds(7))) {
-					emit([doc.deadline, hours], {
-						caption: doc.caption, 
-						description: doc.description,
-						deadline: doc.deadline,
-						hours: hours
-					});
+				var hoursLeft = (doc.estimateHours || 0) - (doc.usedHours || 0);
+				if (doc.type === "todo" && doc.deadline != 0 && 
+					(
+						doc.repeat > 0 ||
+						window.TodAi.dateToday(doc.deadline) <= new Date(window.TodAi.dateToday().getTime() + window.TodAi.daysInMilliseconds(70)) 
+					)
+				   ){
+					var listObj = window.TodAi.db.todo.getListObject(doc);
+					listObj.hours = hoursLeft;
+					emit([doc.deadline, -hoursLeft], listObj);
 				}
 			}
 			db.query({map: map}, {reduce: false, limit: 4*7}, function(err, resp) {

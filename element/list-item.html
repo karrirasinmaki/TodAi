@@ -53,7 +53,7 @@
 					<div class="hours">{{hours}}</div>
 				</div>
 				<div class="col col2">
-					<div class="caption">{{caption}}</div>
+					<div class="caption">{{caption}} {{repeat > 0 ? '(R)' : ''}}</div>
 					<div class="text">{{text}}</div>
 				</div>
 			</div>
@@ -70,6 +70,7 @@
 					hours: 0,
 					href: null,
 					item: null,
+					repeat: 0,
 					disableTrack: false,
 					onPostpone: function(item) {},
 					onDone: function(item) {}
@@ -85,11 +86,12 @@
 				moveXpercent: 0,
 				
 				ready: function() {
-					console.log(this.disableTrack);
 					this.moveXmax = window.innerWidth;
 					if (!this.disableTrack) {
 						this.addTrackEvents();
 					}
+					
+					this.repeat = this.item.value.repeat;
 				},
 				
 				moveXChanged: function(oldVal, newVal) {
@@ -109,18 +111,15 @@
 				addTrackEvents: function() {
 				
 					this.trackPointer = function(evt) {
-						evt.preventDefault();
 						this.moveXforce = this.moveX / evt.dx; // oldVal / newVal
 						this.moveX = evt.dx;
 					};
 
 					this.onTrackStart = function(evt) {
-						evt.preventDefault();
 						this.pointerDown = true;
 					};
 
 					this.onTrackEnd = function(evt) {
-						evt.preventDefault();
 						var self = this;
 						function checkTreshold() {
 							var treshold = self.offsetWidth * 0.56;

@@ -43,6 +43,7 @@
 				fn: fn,
 				context: context
 			});
+			this.notifyListeners();
 		},
 		
 		notifyListeners: function() {

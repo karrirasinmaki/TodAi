@@ -6,34 +6,57 @@
 	<template>
 		<style>
 			list-item.done { opacity: 0.8; border: 3px solid rgba(0, 169, 157, 0.2); border-top: 0; border-bottom: 0; }
+			
+			h2 { margin-bottom: 0; }
 		</style>
 		<h2>{{type}}</h2>
-		<template if="{{type == 'today'}}" repeat="{{item in items}}">
-			<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}" 
-					   item="{{item}}" onPostpone="{{savePostpone}}" onDone="{{saveDone}}"></list-item>
+		<template if="{{isLoading}}">
+			Loading tasks...
 		</template>
-		<template if="{{type == 'week'}}" repeat="{{item in items}}">
-			<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}"></list-item>
-		</template>
-		<template if="{{type == 'archive'}}" repeat="{{item in items}}">
-			<list-item disableTrack="{{true}}" caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.usedHours}}/{{item.value.estimateHours}}" 
-					   href="/todos/{{item.id}}" class="{{item.value.estimateHours <= item.value.usedHours ? 'done' : ''}}"></list-item>
-		</template>
-		<template if="{{totalItemsCount == 0}}">
-			<template if="{{!isAllDone}}">
-				<h3>Seems like today's tasks are done!</h3>
-				<p>
-					Get yourself some rest, 
-					you have deserved it!
-				</p>
-				<a href="#" on-tap="{{fetchNewTodaysTaskList}}">No! Give me more things to do!</a>
+		<template if="{{!isLoading}}">
+			<!-- Today -->
+			<template if="{{type == 'today'}}">
+				<template repeat="{{item in items}}">
+					<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}" 
+							   item="{{item}}" onPostpone="{{savePostpone}}" onDone="{{saveDone}}"></list-item>
+				</template>
+				<p><i>Swipe right to postpone, left to mark as done.</i></p>
 			</template>
-			<template if="{{isAllDone}}">
-				<h3>You are super!</h3>
-				<p>
-					There is absolutely nothing to do anymore. Add some 
-					new tasks and keep youself busy!
-				</p>
+			
+			<!-- Week -->
+			<template if="{{type == 'week'}}">
+				<p><i>Preview of the upcoming week</i></p>
+				<template repeat="{{item in items}}">
+					<list-item disableTrack="{{true}}" caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.usedHours}}/{{item.value.estimateHours}}" 
+							   item="{{item}}" href="/todos/{{item.id}}"></list-item>
+				</template>
+			</template>
+			
+			<!-- Archive -->
+			<template if="{{type == 'archive'}}">
+				<p><i>All tasks, upcoming and past</i></p>
+				<template repeat="{{item in items}}">
+					<list-item disableTrack="{{true}}" caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.usedHours}}/{{item.value.estimateHours}}" 
+							   item="{{item}}" href="/todos/{{item.id}}" class="{{item.value.estimateHours <= item.value.usedHours ? 'done' : ''}}"></list-item>
+				</template>
+			</template>
+			
+			<template if="{{totalItemsCount == 0}}">
+				<template if="{{!isAllDone}}">
+					<h3>Seems like today's tasks are done!</h3>
+					<p>
+						Get yourself some rest, 
+						you have deserved it!
+					</p>
+					<a href="#" on-tap="{{fetchNewTodaysTaskList}}">No! Give me more things to do!</a>
+				</template>
+				<template if="{{isAllDone}}">
+					<h3>You are super!</h3>
+					<p>
+						There is absolutely nothing to do anymore. Add some 
+						new tasks and keep youself busy!
+					</p>
+				</template>
 			</template>
 		</template>
 	</template>
@@ -50,17 +73,17 @@
 			Polymer({
 				
 				isAllDone: false,
+				isLoading: true,
 				
 				postponedItemsCount: 0,
 				doneItemsCount: 0,
 				totalItemsCount: 0,
 				
 				publish: {
-					type: "today"
+					type: ""
 				},
 				
 				typeChanged: function() {
-					console.log(this.type);
 					switch (this.type) {
 						case "today":
 							this.fetchTodaysTaskList();
@@ -85,8 +108,6 @@
 					this.saveDone = function() {
 						self.saveDone_.apply(self, arguments);
 					};
-					
-					this.typeChanged();
 				},
 				
 				updateTotalItemsCount: function() {
@@ -111,8 +132,9 @@
 				 */
 				fetchAllTasks: function() {
 					var self = this;
+					this.isLoading = true;
 					app.db.todo.list(function(err, resp) {
-							console.log(err);
+						self.isLoading = false;
 						if (err) {
 							throw err;
 						}
@@ -125,11 +147,14 @@
 				 */
 				fetchWeeksTaskList: function() {
 					var self = this;
+					this.isLoading = true;
 					app.db.todo.listWeeksTasks(function(err, resp) {
-							console.log(err);
+						self.isLoading = false;
 						if (err) {
 							throw err;
 						}
+						console.log("Week list");
+						console.log(resp);
 						self.items = resp.rows;
 					});
 				},
@@ -139,11 +164,14 @@
 				 */
 				fetchTodaysTaskList: function() {
 					var self = this;
+					this.isLoading = true;
 					app.db.todo.listTodaysTasks(function(err, resp) {
-							console.log(resp);
+						self.isLoading = false;
 						if (err) {
 							throw err;
 						}
+						console.log("Day list");
+						console.log(resp);
 						self.items = resp.rows;
 					});
 				},

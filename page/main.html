@@ -8,12 +8,22 @@
 			<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}" 
 					   item="{{item}}" onPostpone="{{savePostpone}}" onDone="{{saveDone}}"></list-item>
 		</template>
-		<template if="{{items.length == 0}}">
-			<p>
-				Seems today's tasks is done! Get yourself some rest or 
-				get more tasks.
-			</p>
-			<a href="#" on-tap="{{fetchNewTodaysTaskList}}">Give me more!</a>
+		<template if="{{totalItemsCount == 0}}">
+			<template if="{{!isAllDone}}">
+				<h3>Seems like today's tasks are done!</h3>
+				<p>
+					Get yourself some rest, 
+					you have deserved it!
+				</p>
+				<a href="#" on-tap="{{fetchNewTodaysTaskList}}">No! Give me more things to do!</a>
+			</template>
+			<template if="{{isAllDone}}">
+				<h3>You are super!</h3>
+				<p>
+					There is absolutely nothing to do anymore. Add some 
+					new tasks and keep youself busy!
+				</p>
+			</template>
 		</template>
 	</template>
 	<script>
@@ -27,6 +37,12 @@
 			}
 			
 			Polymer({
+				
+				isAllDone: false,
+				
+				postponedItemsCount: 0,
+				doneItemsCount: 0,
+				totalItemsCount: 0,
 								
 				created: function() {
 					var self = this;
@@ -41,6 +57,18 @@
 					};
 					
 					this.fetchTodaysTaskList();
+				},
+				
+				itemsChanged: function() {
+					this.totalItemsCount = this.items.length - this.postponedItemsCount - this.doneItemsCount;
+					console.log(this.totalItemsCount);
+				},
+				
+				postponedItemsCountChanged: function() {
+					this.itemsChanged();
+				},
+				doneItemsCountChanged: function() {
+					this.itemsChanged();
 				},
 				
 				/**
@@ -66,44 +94,56 @@
 						if (err) {
 							throw err;
 						}
-						self.fetchTodaysTaskList();
+						if (resp.length <= 0) {
+							self.items = [];
+							self.isAllDone = true;
+						}
+						else {
+							self.fetchTodaysTaskList();
+						}
 					});
 				},
 				
 				savePostpone_: function(item, callback) {
-					app.db.todo.get(item.id, function(err, resp) {
-						if (err) {
-							
-						}
-						else if (isDateToday(resp.deadline)) {
-							callback({
-								success: false,
-								message: "Hey! You can’t remove " + item.value.caption + " from today’s list. " + 
-									"Due is tomorrow and you don’t have any other time to do it.<br><br>" + 
-									"Dude, just do it."
-							});
-						}
-						else {
+					var self = this;
+					if (isDateToday(item.deadline)) {
+						callback({
+							success: false,
+							message: "Hey! You can’t remove " + item.value.caption + " from today’s list. " + 
+								"Due is tomorrow and you don’t have any other time to do it.<br><br>" + 
+								"Dude, just do it."
+						});
+					}
+					else {
+						app.db.todo.postpone(item.id, function(err, resp) {
+							if (err) {
+								callback({
+									success: false,
+									message: err
+								});
+								return;
+							}
 							callback({
 								success: true,
 								message: "<i>" + item.value.caption + "</i> postponed."
 							});
-						}
-					});
+							self.postponedItemsCount++;
+						});
+					}
 				},
 				
 				saveDone_: function(item, callback) {
 					var self = this;
-					app.db.todo.updateUsedHours(item.id, -item.value.hours, function(err, resp) {
+					app.db.todo.updateUsedHours(item.id, item.value.hours, function(err, resp) {
 						if (err) {
+							return;
 						}
-						else {
-							callback({
-								success: true,
-								message: "Great! <i>" + item.value.caption + "</i> done.<br><br>" + 
-									(self.items.length - 1) + " more tasks for today."
-							});
-						}
+						callback({
+							success: true,
+							message: "Great! <i>" + item.value.caption + "</i> done.<br><br>" + 
+								(self.items.length - 1) + " more tasks for today."
+						});
+						self.doneItemsCount++;
 					});
 				}
 				

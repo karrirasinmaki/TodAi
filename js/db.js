@@ -113,18 +113,26 @@
 			}
 		},
 		
-		updateUsedHours: function(id, delta, callback) {
+		/**
+		 * Updates used hours of given todo. Postpones todo 
+		 * into future.
+		 */
+		updateUsedHours: function(id, addition, callback) {
 			var self = this;
 			this.get(id, function(err, resp) {
 				if (err) {
 					callback(err, resp);
 				}
 				else {
-					resp.usedHours += delta;
+					resp.usedHours += addition;
 					resp.showDate = 0;
 					self.save(resp, callback);
 				}
 			});
+		},
+		
+		postpone: function(id, callback) {
+			this.updateUsedHours(id, 0, callback);
 		},
 		
 		get: function(id, callback) {
@@ -221,7 +229,7 @@
 		requestNewTodaysTaskList: function(callback) {
 			this.updateDateOfList(function(){});
 			function map(doc) {
-				var hoursLeft = (doc.estimateHours || 0) - (doc.userdHours || 0);
+				var hoursLeft = (doc.estimateHours || 0) - (doc.usedHours || 0);
 				if (doc.type === "todo" && hoursLeft > 0) {
 					
 					emit([doc.deadline, -hoursLeft], doc);
@@ -266,6 +274,7 @@
 					emit([doc.deadline, hours], {
 						caption: doc.caption, 
 						description: doc.description,
+						deadline: doc.deadline,
 						hours: hours
 					});
 				}

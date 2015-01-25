@@ -12,9 +12,13 @@
 			
 			.background .slot { position: absolute; left: 0; top: 0; right: 0; bottom: 0; opacity: 0; transition: 0.5s all; }
 			.background .slot.active { opacity: 1; }
+			.background .slot img { position: absolute; top: 15%; height: 70%; }
 			
-			.background .slot.postpone { background: #ccc; }
-			.background .slot.done { background: #39b54a; }
+			.background .slot.postpone { background-color: #ccc; }
+				.background .slot.postpone img { left: 1em; }
+			
+			.background .slot.done { background-color: #39b54a; }
+				.background .slot.done img { right: 1em; }
 			
 			.list-item { background: #fafafa; position: relative; padding: 0.3em; height: 2.4em; }
 			.list-item.transition-on { transition: 0.5s all; }
@@ -30,9 +34,9 @@
 			
 			.col.col2 { margin-left: 4em; }
 		</style>
-		<div class="background">
-			<div class="slot postpone {{moveX > 0 ? 'active' : ''}}"></div>
-			<div class="slot done {{moveX < 0 ? 'active' : ''}}"></div>
+		<div class="background" style="opacity: {{moveXpercent}};">
+			<div class="slot postpone {{moveX > 0 ? 'active' : ''}}"><img src="../img/clock.svg" alt="postpone"></div>
+			<div class="slot done {{moveX < 0 ? 'active' : ''}}"><img src="../img/done.svg" alt="done"></div>
 		</div>
 		<div class="list-item hours-{{hours}} transparent" style="display: {{showSwipeStatus ? 'block' : 'none'}};">
 			<div class="col col2">
@@ -73,7 +77,19 @@
 				showSwipeStatus: false,
 				
 				pointerDown: false,
+				
 				moveX: 0,
+				moveXforce: 0,
+				moveXmax: 0,
+				moveXpercent: 0,
+				
+				created: function() {
+					this.moveXmax = window.innerWidth;
+				},
+				
+				moveXChanged: function(oldVal, newVal) {
+					this.moveXpercent = Math.abs(this.moveX) / this.moveXmax;
+				},
 				
 				onTap: function(evt) {
 					if (this.pointerDown) {
@@ -87,6 +103,7 @@
 				
 				trackPointer: function(evt) {
 					evt.preventDefault();
+					this.moveXforce = this.moveX / evt.dx; // oldVal / newVal
 					this.moveX = evt.dx;
 				},
 				
@@ -98,23 +115,43 @@
 				onTrackEnd: function(evt) {
 					evt.preventDefault();
 					var self = this;
-					setTimeout(function() {
+					function checkTreshold() {
 						var treshold = self.offsetWidth * 0.56;
-						if (self.moveX > treshold) self.doPostpone();
-						else if (self.moveX < -treshold) self.doDone();
-						else self.doCancel();
+						if (self.moveX > treshold) {
+							self.doPostpone();
+							return true;
+						}
+						else if (self.moveX < -treshold) {
+							self.doDone();
+							return true;
+						}
+						return false;
+					}
+					function doForce() {
+						self.moveX += self.moveXforce;
+						self.moveXforce -= 0.02;
+						if (checkTreshold()) {
+							return;
+						}
+						if (Math.abs(self.moveXforce) > 0.5) {
+							window.requestAnimationFrame(doForce);
+							return;
+						}
+						self.doCancel();
+					}
+					doForce();
+					setTimeout(function() {
+						self.pointerDown = false;
 					}, 100);
 				},
 				
 				doCancel: function() {
 					this.showSwipeStatus = false;
-					this.pointerDown = false;
 					this.moveX = 0;
 				},
 				
 				doPostpone: function() {
 					var self = this;
-					this.pointerDown = false;
 					this.moveX = 9999;
 					this.onPostpone(this.item, function() {
 						self.showMessage.apply(self, arguments);
@@ -123,7 +160,6 @@
 				
 				doDone: function() {
 					var self = this;
-					this.pointerDown = false;
 					this.moveX = -9999;
 					this.onDone(this.item, function() {
 						self.showMessage.apply(self, arguments);

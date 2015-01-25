@@ -207,7 +207,7 @@
 						});
 					}
 					else {
-						app.db.todo.postpone(item.id, function(err, resp) {
+						app.db.todo.postpone(item.id, item.value.hours, function(err, resp) {
 							if (err) {
 								callback({
 									success: false,

@@ -24,12 +24,19 @@
 	
 	var db, todo;
 	
-	if (app.currentProfile == "test") {
-		db = new PouchDB("todai-test");
+	/**
+ 	 * Open database
+	 */
+	function open() {
+		if (app.currentProfile == "test") {
+			db = new PouchDB("todai-test");
+		}
+		else {
+			db = new PouchDB("todai");
+		}
 	}
-	else {
-		db = new PouchDB("todai");
-	}
+	
+	open();
 	
 	/**
 	 * Destroy database.
@@ -70,8 +77,37 @@
 	 * will take of day.
 	 */
 	function tasksDailyHours(doc) {
+		window.TodAi.db.todo.shouldHaveAi(doc);
 		var hoursLeft = (doc.estimateHours || 0) - (doc.userdHours || 0);
-		return Math.min(hoursLeft, 4);
+		var hoursInFavor = doc.ai.hours;
+		
+		// Look from ai.hours where is most biggest favour for hour. 
+		// The bigger the favour is, the more likely user will
+		// mark it as done.
+		var maxFav = null;
+		var minFav = null;
+		var maxFavIndex = 0; // index == hours
+		for (var i = 0, l = hoursInFavor.length; i < l; ++i) {
+			var fav = hoursInFavor[i];
+			if (maxFav == null || maxFav < fav) {
+				maxFav = fav;
+				maxFavIndex = i;
+			}
+			if (minFav == null || minFav > fav) {
+				minFav = fav;
+			}
+		}
+		
+		// If hoursToAssign is less than zero or 
+		// way less than max fav, return max fav hours.
+		// Otherwise return hoursToAssign.
+		var hoursToAssign = Math.min(hoursLeft, 4);
+		if (hoursInFavor[hoursToAssign] < 0 || hoursInFavor[hoursToAssign] < maxFav - 6) {
+			return maxFavIndex + 1;
+		}
+		else {
+			return hoursToAssign;
+		}
 	}
 	window.TodAi.tasksDailyHours = tasksDailyHours;
 	
@@ -112,6 +148,15 @@
 		
 		TYPE: "todo",
 		
+		/**
+ 		 * If in doc obj there is no ai obj, create it
+		 */
+		shouldHaveAi: function(doc) {
+			if (!doc.ai) doc.ai = {};
+			if (!doc.ai.day) doc.ai.day = [];
+			if (!doc.ai.hours) doc.ai.hours = [];
+		},
+		
 		getListObject: function(doc) {
 			return {
 				caption: doc.caption, 
@@ -146,16 +191,32 @@
 		},
 		
 		/**
-		 * Updates used hours of given todo. Postpones todo 
-		 * into future.
+		 * Updates used hours of given todo. If addition < 0, it means 
+		 * just postponing task
+		 * @param id
+		 * @param addition how many hour's task was it
+		 * @callback
 		 */
 		updateUsedHours: function(id, addition, callback) {
 			var self = this;
+			function train(doc, additionWas, trainValue) {
+				window.TodAi.db.todo.shouldHaveAi(doc);
+				doc.ai[dateToday().getDay()] += trainValue;
+				doc.ai[additionWas] += trainValue;
+			}
 			this.get(id, function(err, resp) {
 				if (err) {
 					callback(err, resp);
 				}
 				else {
+					if (addition <= 0) {
+						train(resp, -addition, -1);
+						addition = 0;
+					}
+					else {
+						train(resp, addition, 1);
+					}
+					
 					resp.usedHours += addition;
 					if (resp.repeat > 0 && addition > 0) {
 						resp.showDate = new Date(new Date(resp.showDate).getTime() + daysInMilliseconds(resp.repeat));
@@ -168,8 +229,14 @@
 			});
 		},
 		
-		postpone: function(id, callback) {
-			this.updateUsedHours(id, 0, callback);
+		/**
+		 * Postpone task.
+		 * @param id
+		 * @param addition how many hour's task was it
+		 * @callback
+		 */
+		postpone: function(id, addition, callback) {
+			this.updateUsedHours(id, -addition, callback);
 		},
 		
 		get: function(id, callback) {
@@ -249,8 +316,12 @@
 			function map(doc) {
 				var hoursLeft = (doc.estimateHours || 0) - (doc.usedHours || 0);
 				if (doc.type === "todo" && hoursLeft > 0) {
-					
-					emit([doc.deadline, -hoursLeft], doc);
+					window.TodAi.db.todo.shouldHaveAi(doc);
+					emit([
+						doc.deadline, // where deadline is closest
+						-hoursLeft,   // where is most hours left
+						-doc.ai.day[window.TodAi.dateToday().getDay()] // where this day is most likely to be marked as done
+					], doc);
 				}
 			}
 			db.query({map: map}, {reduce: false, limit: 4}, function(err, resp) {
@@ -352,6 +423,7 @@
 	
 	app.db = {
 		db: db,
+		open: open,
 		destroy: destroy,
 		todo: todo
 	};

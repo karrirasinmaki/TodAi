@@ -13,6 +13,7 @@
 			<li on-tap="{{showToday}}">Today</li>
 			<li on-tap="{{showWeek}}">Week</li>
 			<li on-tap="{{showArchive}}">Archive</li>
+			<li on-click="{{tweet}}">Tweet</li>
 		</ul>
 	</template>
 	<script>
@@ -30,6 +31,11 @@
 				
 				showArchive: function() {
 					app.route.open("/todos/archive");
+				},
+				
+				tweet: function() {
+					var message = encodeURIComponent("#TodAi - Todo list with intelligence!\nhttp://ss15-hnrc.divshot.io/\n#staticshowdown");
+					window.open("https://twitter.com/home?status=" + message, "_blank");
 				}
 				
 			});

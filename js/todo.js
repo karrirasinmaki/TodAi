@@ -14,6 +14,12 @@
 		this.showDate = 0; //new Date();
 		this.lastShowDate = 0; //new Date();
 		
+		this.ai = {
+			// stats when user has postponed. + = done, - = postpone
+			days: [0, 0, 0, 0, 0, 0, 0],
+			hours: [0, 0, 0, 0, 0, 0, 0, 0]
+		};
+		
 		this.categoryId = app.Category.Id.WORK;
 	}
 	

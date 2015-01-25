@@ -52,7 +52,7 @@
 				</div>
 				<div class="input-row" style="visibility: {{item.repeat < 0 ? 'hidden' : 'visible'}};">
 					<label>{{item.repeat > 0 ? 'Repeat until' : 'Deadline'}}</label>
-					<input type="date" value="{{item.deadline}}" placeholder="Deadline">
+					<input type="date" value="{{deadlineDateString}}" placeholder="Deadline">
 				</div>
 				<div>
 					<div class="" style="display: {{isValid == true ? 'none' : 'block'}};">
@@ -88,6 +88,15 @@
 				
 				isValid: false,
 				
+				get deadlineDateString() {
+					var isoString = new Date(this.item.deadline).toISOString();
+					return isoString.substring(0, isoString.indexOf("T"));
+				},
+				
+				set deadlineDateString(val) {
+					this.item.deadline = new Date(val);
+				},
+				
 				doValidation: function() {
 					var out = [];
 					if (this.item.caption.length <= 0) out.push("Write caption");
@@ -104,11 +113,7 @@
 				},
 				
 				setWrapperHeight: function() {
-					var self = this;
-					this.$.wrapper.style.height = "auto";
-					setTimeout(function() {
-						self.$.wrapper.style.height = self.$.wrapper.offsetHeight + "px";
-					}, 300);
+					this.$.wrapper.style.height = this.$.wrapper.offsetHeight + "px";
 				},
 				
 				created: function() {
@@ -120,9 +125,11 @@
 				
 				domReady: function() {
 					var self = this;
-					this.setWrapperHeight();
-					this.$.wrapper.classList.add("collapse");
+					self.$.wrapper.style.visibility = "hidden";
+					self.setWrapperHeight();
+					self.$.wrapper.classList.add("collapse");
 					setTimeout(function() {
+						self.$.wrapper.style.visibility = "visible";
 						self.$.wrapper.classList.remove("collapse");
 					}, 100);
 				},

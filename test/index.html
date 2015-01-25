@@ -4,7 +4,7 @@
 		<title>TodAi</title>
 		
 		<!-- libs -->
-		<script src="../public/node_modules/pouchdb/dist/pouchdb.min.js"></script>
+		<script src="../node_modules/pouchdb/dist/pouchdb.min.js"></script>
 		
 		<!-- commons -->
 		<script>
@@ -14,18 +14,18 @@
 			};
 		</script>
 		
-		<script src="../public/js/db.js"></script>
-		<script src="../public/js/category.js"></script>
-		<script src="../public/js/todo.js"></script>
+		<script src="../js/commons.js"></script>
+		
+		<script src="../js/db.js"></script>
+		<script src="../js/category.js"></script>
+		<script src="../js/todo.js"></script>
 		
 		<script src="test-todo.js"></script>
 	</head>
 	<body>
 		<script>
 			(function(app) {
-				
-				console.info("Running tests...");
-				
+							
 				var totalTests = 0;
 
 				var passed = [];
@@ -91,12 +91,18 @@
 						console.info("  Passed " + totalPassed + "/" + totalTests);
 						console.info("  Failed " + totalFailed + "/" + totalTests);
 
-						db.destroy();
+						console.log("Wanna destroy db? Call: TodAi.db.destroy();");
 					});
 				}
 				
-				runTest(app.test.testCreateTodo);
-				endTests();
+				
+				console.log("Wanna run tests? Call: TodAi.runTests();");
+				
+				app.runTests = function() {
+					console.info("Running tests...");
+					runTest(app.test.testCreateTodo);
+					endTests();
+				};
 				
 			})(window.TodAi);
 		</script>

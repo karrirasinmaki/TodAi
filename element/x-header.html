@@ -17,7 +17,7 @@
 		</style>
 		<div class="header">
 			<div class="row">
-				<div class="col logo" on-tap="{{openMain}}">
+				<div class="col logo" on-tap="{{onTapLogo}}">
 					<img src="../img/logo.svg" alt="logo">
 				</div>
 				<div class="col add-new">
@@ -31,11 +31,8 @@
 			
 			Polymer({
 				
-				openMain: function(evt) {
-					if (evt) {
-						evt.preventDefault();
-					}
-					app.route.open("/");
+				publish: {
+					onTapLogo: null
 				},
 				
 				openNewTask: function(evt) {

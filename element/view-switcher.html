@@ -1,6 +1,7 @@
 <link rel="import" href="../bower_components/polymer/polymer.html">
 <link rel="import" href="../bower_components/core-ajax/core-ajax.html">
 
+<link rel="import" href="x-menu.html">
 <link rel="import" href="x-header.html">
 <link rel="import" href="plus-button.html">
 
@@ -9,11 +10,21 @@
 		
 <polymer-element name="view-switcher">
 	<template>
-		<link rel="stylesheet" href="../css/view-switcher.css">
-		<x-header title="{{page.title}}"></x-header>
+		<style>
+			#menu, #menu.active { transform: translate3d(0, 0, 0); }
+			
+			#menu { position: relative; overflow: hidden; }
+			
+			#menu x-menu { margin-top: -100%; opacity: 0; padding-bottom: 1em; transition: 0.5s margin-top, 0.5s opacity, 0.7s transform; transform: translateY(-60px); }
+			#menu.active x-menu { margin-top: 0!important; opacity: 1; transform: translateY(0px); }
+		</style>
+		<div id="menu" on-tap="{{closeMenu}}">
+			<x-menu id="menuinner"></x-menu>
+		</div>
+		<x-header id="header" title="{{page.title}}" onTapLogo="{{onTapLogo}}"></x-header>
 		<div id="main">
 			<template if="{{page.name == 'view-main'}}">
-				<view-main></view-main>
+				<view-main type="{{page.type}}"></view-main>
 			</template>
 			<template if="{{page.name == 'view-todo'}}">
 				<view-todo item="{{todo}}"></view-todo>
@@ -32,22 +43,36 @@
 				},
 				"todo": {
 					name: "view-todo",
-					title: "new Todo item"
+					title: "new Todo item",
+					type: "today"
 				}
 			};
 			
 			Polymer({
 				
 				page: null,
+				urlBefore: "/",
 				
-				setPage: function(pageName) {
+				setPage: function(pageName, type) {
 					this.page = pages_[pageName];
+					this.page.type = type;
 				},
 				
-				onRouteChange: function() {
+				onRouteChange: function(oldVal, newVal) {
 					var self = this;
 					
+					this.urlBefore = oldVal;
+					
 					app.route
+					.when("/todos", function() {
+						self.setPage("main", "today");
+					})
+					.when("/todos/week", function() {
+						self.setPage("main", "week");
+					})
+					.when("/todos/archive", function() {
+						self.setPage("main", "archive");
+					})
 					.when("/todos/new/", function(id) {
 						self.todo = null;
 						self.setPage("todo");
@@ -65,13 +90,32 @@
 						self.setPage("todo");
 					})
 					.when(true, function() {
-						self.setPage("main");
+						self.setPage("main", "today");
 					});
 				},
 				
 				created: function() {
 					this.todo = new window.TodAi.Todo();
 					app.route.listen(this.onRouteChange, this);
+				},
+				
+				domReady: function() {
+					var self = this;
+					
+					this.$.menuinner.style.marginTop = (-this.$.menuinner.offsetHeight) + "px";
+					
+					this.$.header.onTapLogo = function() {
+						if (self.page.name == "view-todo") {
+							app.route.open(self.urlBefore);
+						}
+						else {
+							self.$.menu.classList.toggle("active");
+						}
+					}
+				},
+				
+				closeMenu: function() {
+					this.$.menu.classList.toggle("active");
 				}
 				
 			});

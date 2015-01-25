@@ -18,7 +18,12 @@
 
 (function(app) {
 	
-	var db;
+	var dateToday = app.dateToday;
+	var dateTomorrow = app.dateTomorrow;
+	var daysInMilliseconds = app.daysInMilliseconds;
+	
+	var db, todo;
+	
 	if (app.currentProfile == "test") {
 		db = new PouchDB("todai-test");
 	}
@@ -70,24 +75,30 @@
 	}
 	window.TodAi.tasksDailyHours = tasksDailyHours;
 	
-	/**
-	 * Get given dates date at 00:00:00 o'clock. If no 
-	 * date given use today's date.
-	 */
-	function dateToday(dateval) {
-		var date;
-		if (dateval) date = new Date(dateval);
-		else date = new Date();
-
-		date.setMilliseconds(0);
-		date.setSeconds(0);
-		date.setMinutes(0);
-		date.setHours(0);
-		return date;
+	function isItTimeForDayChange(dateOfListDoc, callback) {
+		if (dateToday() > dateToday(dateOfListDoc.date)) {
+			callback(false);
+			return;
+		}
+		if ((new Date()).getHours() < 5) {
+			todo.listTodaysTasks(function(err, resp) {
+				if (err) {
+					callback(true);
+					return;
+				}
+				else {
+					callback(resp.rows.length <= 0);
+				}
+			});
+		}
+		else {
+			callback(true);
+			return;
+		}
+		callback(false);
 	}
-	window.TodAi.dateToday = dateToday;
 	
-	var todo = {
+	todo = {
 		
 		TYPE: "todo",
 		
@@ -125,7 +136,12 @@
 				}
 				else {
 					resp.usedHours += addition;
-					resp.showDate = 0;
+					if (resp.repeat > 0 && addition > 0) {
+						resp.showDate = new Date(new Date(resp.showDate).getTime() + daysInMilliseconds(resp.repeat));
+					}
+					else {
+						resp.showDate = 0;
+					}
 					self.save(resp, callback);
 				}
 			});
@@ -148,7 +164,13 @@
 		list: function(callback) {
 			function map(doc) {
 				if (doc.type === "todo") {
-					emit(doc.caption, {caption: doc.caption, description: doc.description});
+					emit(doc._id, {
+						caption: doc.caption, 
+						description: doc.description,
+						deadline: doc.deadline,
+						estimateHours: doc.estimateHours,
+						usedHours: doc.usedHours
+					});
 				}
 			}
 			db.query({map: map}, {reduce: false}, callback);
@@ -169,27 +191,7 @@
 			var self = this;
 			var id = "date-of-list";
 			function returnNewDay() {
-				self.requestNewTodaysTaskList(function(){});
-			}
-			function isItTimeForDayChange(doc, callback) {
-				if (dateToday(doc.date) < dateToday()) {
-					if ((new Date()).getHours() < 5) {
-						this.listTodaysTasks(function(err, resp) {
-							if (err) {
-								callback(true);
-								return;
-							}
-							else {
-								callback(resp.rows.length <= 0);
-							}
-						});
-					}
-					else {
-						callback(true);
-						return;
-					}
-				}
-				callback(false);
+				self.requestNewTodaysTaskList(function(){}, callback);
 			}
 			db.get(id, function(err, resp) {
 				if (err) {
@@ -199,7 +201,7 @@
 					isItTimeForDayChange(resp, function(bool) {
 						if (bool) {
 							resp.date = dateToday();
-							returnNewDay(resp);
+							returnNewDay();
 						}
 						else {
 							callback(err, resp);
@@ -226,8 +228,8 @@
 		/**
 		 * Generate new today's tasklist.
 		 */
-		requestNewTodaysTaskList: function(callback) {
-			this.updateDateOfList(function(){});
+		requestNewTodaysTaskList: function(callback, updateDateOfListCallback) {
+			this.updateDateOfList(updateDateOfListCallback || function(){});
 			function map(doc) {
 				var hoursLeft = (doc.estimateHours || 0) - (doc.usedHours || 0);
 				if (doc.type === "todo" && hoursLeft > 0) {
@@ -247,6 +249,7 @@
 					var hours = tasksDailyHours(doc);
 					if (totalHours + hours <= 8) {
 						doc.showDate = app.dateToday();
+						doc.lastShowDate = doc.showDate;
 						doc.dailyHours = hours;
 						toUpdate.push(doc);
 						totalHours += hours;
@@ -269,8 +272,39 @@
 			}
 			function map(doc) {
 				var hours = doc.dailyHours;
+				console.log(doc.showDate);
+				if (doc.type === "todo" && doc.showDate != 0) {
+					emit([doc.deadline, hours], {
+						caption: doc.caption, 
+						description: doc.description,
+						deadline: doc.deadline,
+						estimateHours: doc.estimateHours,
+						usedHours: doc.usedHours,
+						hours: hours
+					});
+				}
+			}
+			db.query({map: map}, {reduce: false, limit: 4}, function(err, resp) {
+				callback(err, resp);
+			});
+		},
+		
+		/**
+		 * List today's tasks.
+		 */
+		listWeeksTasks: function(callback, skipDateCheck) {
+			var self = this;
+			if (!skipDateCheck) {
+				this.dateOfList(function() {
+					self.listTodaysTasks(callback, true);
+				});
+				return;
+			}
+			function map(doc) {
+				var hours = doc.dailyHours;
 				
-				if (doc.type === "todo" && doc.showDate != 0 && window.TodAi.dateToday(doc.showDate) <= window.TodAi.dateToday()) {
+				if (doc.type === "todo" && doc.showDate != 0 && 
+					window.TodAi.dateToday(doc.showDate) <= new Date(window.TodAi.dateToday() + window.TodAi.datesInMilliseconds(7))) {
 					emit([doc.deadline, hours], {
 						caption: doc.caption, 
 						description: doc.description,
@@ -279,7 +313,7 @@
 					});
 				}
 			}
-			db.query({map: map}, {reduce: false, limit: 4}, function(err, resp) {
+			db.query({map: map}, {reduce: false, limit: 4*7}, function(err, resp) {
 				callback(err, resp);
 			});
 		}

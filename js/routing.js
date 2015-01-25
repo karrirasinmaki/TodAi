@@ -17,9 +17,19 @@
 	};
 	
 	var route = {
+		
+		hashBefore: "/",
+		hashNow: trimPath(location.hash),
+		
 		open: function(path) {
 			location.hash = trimPath(path);
 		},
+		
+		back: function() {
+			this.open(this.hashBefore);
+		},
+		
+		listeners: [],
 		
 		/**
 		 * Start listening route changes. On 
@@ -29,10 +39,28 @@
 		 * @param context (this)
 		 */
 		listen: function(fn, context) {
+			this.listeners.push({
+				fn: fn,
+				context: context
+			});
+		},
+		
+		notifyListeners: function() {
+			for (var i = 0, l = this.listeners.length; i < l; ++i) {
+				var listener = this.listeners[i];
+				console.log(listener);
+				listener.fn.call(listener.context, this.hashBefore, this.hashNow);
+			}
+		},
+		
+		startListener__: function(fn, context) {
+			var self = this;
 			window.addEventListener("hashchange", function() {
-				fn.call(context);
+			console.log(self);
+				self.hashBefore = self.hashNow;
+				self.hashNow = trimPath(location.hash);
+				self.notifyListeners();
 			}, false);
-			fn.call(context);
 		},
 
 		/**
@@ -55,6 +83,7 @@
 			
 			var vars = [];
 			var givenPathParts = trimPath(path).substr(1).split("/");
+			var givenPathPartsLen = givenPathParts.length;
 			var pathParts = trimPath(location.hash).substr(1).split("/");
 			var pathPartsLen = pathParts.length;
 			
@@ -63,6 +92,11 @@
 				// if given path part is {variable}
 				if (part.charAt(0) == "{" && part.charAt(part.length - 1) == "}") {
 					vars.push(pathParts[i]);
+				}
+				else if (part == "*") {	
+				}
+				else if (part == "**") {
+					break;
 				}
 				// if given path part does not match real path part 
 				else if (part != pathParts[i]) {
@@ -74,10 +108,15 @@
 				}
 			}
 			
+			if (pathPartsLen != givenPathPartsLen) {
+				return this;
+			}
+			
 			fn.apply(this, vars);
 			return emptyRoute;
 		}
 	};
+	route.startListener__();
 	
 	app.route = route;
 	

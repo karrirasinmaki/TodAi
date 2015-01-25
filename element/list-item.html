@@ -70,6 +70,7 @@
 					hours: 0,
 					href: null,
 					item: null,
+					disableTrack: false,
 					onPostpone: function(item) {},
 					onDone: function(item) {}
 				},
@@ -83,8 +84,12 @@
 				moveXmax: 0,
 				moveXpercent: 0,
 				
-				created: function() {
+				ready: function() {
+					console.log(this.disableTrack);
 					this.moveXmax = window.innerWidth;
+					if (!this.disableTrack) {
+						this.addTrackEvents();
+					}
 				},
 				
 				moveXChanged: function(oldVal, newVal) {
@@ -101,48 +106,51 @@
 					}
 				},
 				
-				trackPointer: function(evt) {
-					evt.preventDefault();
-					this.moveXforce = this.moveX / evt.dx; // oldVal / newVal
-					this.moveX = evt.dx;
-				},
+				addTrackEvents: function() {
 				
-				onTrackStart: function(evt) {
-					evt.preventDefault();
-					this.pointerDown = true;
-				},
-				
-				onTrackEnd: function(evt) {
-					evt.preventDefault();
-					var self = this;
-					function checkTreshold() {
-						var treshold = self.offsetWidth * 0.56;
-						if (self.moveX > treshold) {
-							self.doPostpone();
-							return true;
+					this.trackPointer = function(evt) {
+						evt.preventDefault();
+						this.moveXforce = this.moveX / evt.dx; // oldVal / newVal
+						this.moveX = evt.dx;
+					};
+
+					this.onTrackStart = function(evt) {
+						evt.preventDefault();
+						this.pointerDown = true;
+					};
+
+					this.onTrackEnd = function(evt) {
+						evt.preventDefault();
+						var self = this;
+						function checkTreshold() {
+							var treshold = self.offsetWidth * 0.56;
+							if (self.moveX > treshold) {
+								self.doPostpone();
+								return true;
+							}
+							else if (self.moveX < -treshold) {
+								self.doDone();
+								return true;
+							}
+							return false;
 						}
-						else if (self.moveX < -treshold) {
-							self.doDone();
-							return true;
+						function doForce() {
+							self.moveX += self.moveXforce;
+							self.moveXforce -= 0.02;
+							if (checkTreshold()) {
+								return;
+							}
+							if (Math.abs(self.moveXforce) > 0.5) {
+								window.requestAnimationFrame(doForce);
+								return;
+							}
+							self.doCancel();
 						}
-						return false;
-					}
-					function doForce() {
-						self.moveX += self.moveXforce;
-						self.moveXforce -= 0.02;
-						if (checkTreshold()) {
-							return;
-						}
-						if (Math.abs(self.moveXforce) > 0.5) {
-							window.requestAnimationFrame(doForce);
-							return;
-						}
-						self.doCancel();
-					}
-					doForce();
-					setTimeout(function() {
-						self.pointerDown = false;
-					}, 100);
+						doForce();
+						setTimeout(function() {
+							self.pointerDown = false;
+						}, 100);
+					};
 				},
 				
 				doCancel: function() {

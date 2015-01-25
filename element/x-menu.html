@@ -1,0 +1,39 @@
+<link rel="import" href="../bower_components/polymer/polymer.html">
+
+<polymer-element name="x-menu">
+	<template>
+		<style>
+			:host { display: block; }
+			
+			ul { margin: 0; padding: 0; }
+			
+			ul li { display: block; list-style: none; border: 2px solid #00a99d; color: #00a99d; padding: 0.6em; text-align: center; margin: 0.4em; }
+		</style>
+		<ul>
+			<li on-tap="{{showToday}}">Today</li>
+			<li on-tap="{{showWeek}}">Week</li>
+			<li on-tap="{{showArchive}}">Archive</li>
+		</ul>
+	</template>
+	<script>
+		(function(app) {
+			
+			Polymer({
+				
+				showToday: function() {
+					app.route.open("/todos");
+				},
+				
+				showWeek: function() {
+					app.route.open("/todos/week");
+				},
+				
+				showArchive: function() {
+					app.route.open("/todos/archive");
+				}
+				
+			});
+			
+		})(window.TodAi);
+	</script>
+</polymer-element>

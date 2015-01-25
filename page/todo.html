@@ -3,6 +3,8 @@
 <polymer-element name="view-todo">
 	<template>
 		<style>
+			#wrapper { transform: translate3d(0, 0, 0); }
+			
 			:host { display: block; position: absolute; left: calc(12% + 0.7em); top: 0; right: 0; margin-bottom: 1.2em; }
 			
 			label { display: block; }
@@ -14,6 +16,8 @@
 			#wrapper.collapse { height: 0px!important; }
 			
 			#theform { margin: 0.4em; }
+			
+			.link { text-decoration: underline; }
 		</style>
 		<div id="wrapper">
 			<form id="theform" on-submit="{{preventSubmit}}">
@@ -30,16 +34,13 @@
 					<textarea rows="5" placeholder="Notes" value="{{item.notes}}"></textarea>
 				</div>
 				<div class="input-row">
-					<label>Deadline</label>
-					<input type="date" value="{{item.deadline}}" placeholder="Deadline">
-				</div>
-				<div class="input-row">
 					<label>Hour budget</label>
 					<input type="number" value="{{item.estimateHours}}" placeholder="Hour budget">
 				</div>
 				<div class="input-row">
 					<label>Repeat</label>
 					<select value="{{item.repeat}}">
+						<option value=-1 selected disabled>Select</option>
 						<option value=0>No repeat</option>
 						<option value=1>Every day</option>
 						<option value=2>Every second day</option>
@@ -49,30 +50,77 @@
 						<option value=31>Monthly</option>
 					</select>
 				</div>
-				<div>
-					<add-new-task text="{{item._id ? 'Save task' : 'Add new task +'}}" on-tap="{{saveItem}}"></add-new-task>
+				<div class="input-row" style="visibility: {{item.repeat < 0 ? 'hidden' : 'visible'}};">
+					<label>{{item.repeat > 0 ? 'Repeat until' : 'Deadline'}}</label>
+					<input type="date" value="{{item.deadline}}" placeholder="Deadline">
 				</div>
+				<div>
+					<div class="" style="display: {{isValid == true ? 'none' : 'block'}};">
+						<div><b>Before save:</b></div>
+						<ul>
+							<template repeat="{{item in isValid}}">
+								<li>{{item}}</li>
+							</template>
+						</ul>
+					</div>
+					<div class="input-row">
+						<add-new-task text="{{item._id ? 'Save task' : 'Add new task +'}}" on-tap="{{saveItem}}"></add-new-task>
+					</div>
+				</div>
+				<template if="{{item._id}}">
+					<div>
+						<span class="link" on-tap="{{deleteItem}}">Delete</span>
+					</div>
+				</template>
 			</form>
 		</div>
 	</template>
 	<script>
 		(function(app) {
 			
+			var today = app.dateToday();
+			
 			Polymer({
 				
 				publish: {
 					item: null
 				},
-								
+				
+				isValid: false,
+				
+				doValidation: function() {
+					var out = [];
+					if (this.item.caption.length <= 0) out.push("Write caption");
+					if (this.item.description.length <= 0) out.push("Write short description");
+					if (this.item.estimateHours <= 0) out.push("Set hour budget");
+					if (this.item.repeat < 0) out.push("Select repeat");
+					else if (new Date(this.item.deadline) < today) out.push("Pick a date in future");
+					this.isValid = out.length > 0 ? out : true;
+				},
+				
+				isValidChanged: function() {
+					var self = this;
+					self.setWrapperHeight();
+				},
+				
+				setWrapperHeight: function() {
+					var self = this;
+					this.$.wrapper.style.height = "auto";
+					setTimeout(function() {
+						self.$.wrapper.style.height = self.$.wrapper.offsetHeight + "px";
+					}, 300);
+				},
+				
 				created: function() {
 					var self = this;
 					
 					this.item = new window.TodAi.Todo();
+					this.doValidation();
 				},
 				
 				domReady: function() {
 					var self = this;
-					this.$.wrapper.style.height = this.$.wrapper.offsetHeight + "px";
+					this.setWrapperHeight();
 					this.$.wrapper.classList.add("collapse");
 					setTimeout(function() {
 						self.$.wrapper.classList.remove("collapse");
@@ -84,12 +132,27 @@
 				},
 				
 				saveItem: function() {
+					this.doValidation()
+					if (this.isValid !== true) {
+						return;
+					}
 					window.TodAi.db.todo.save(this.item, function(err, resp) {
 						if (err) {
+							console.warn(err);
 							return;
 						}
-						console.log(resp);
-						app.route.open("/");
+						app.route.back();
+					});
+				},
+				
+				deleteItem: function(evt) {
+					evt.preventDefault();
+					window.TodAi.db.todo.remove(this.item, function(err, resp) {
+						if (err) {
+							console.warn(err);
+							return;
+						}
+						app.route.back();
 					});
 				}
 				

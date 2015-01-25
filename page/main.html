@@ -4,9 +4,20 @@
 
 <polymer-element name="view-main">
 	<template>
-		<template repeat="{{item in items}}">
+		<style>
+			list-item.done { opacity: 0.8; border: 3px solid rgba(0, 169, 157, 0.2); border-top: 0; border-bottom: 0; }
+		</style>
+		<h2>{{type}}</h2>
+		<template if="{{type == 'today'}}" repeat="{{item in items}}">
 			<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}" 
 					   item="{{item}}" onPostpone="{{savePostpone}}" onDone="{{saveDone}}"></list-item>
+		</template>
+		<template if="{{type == 'week'}}" repeat="{{item in items}}">
+			<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}"></list-item>
+		</template>
+		<template if="{{type == 'archive'}}" repeat="{{item in items}}">
+			<list-item disableTrack="{{true}}" caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.usedHours}}/{{item.value.estimateHours}}" 
+					   href="/todos/{{item.id}}" class="{{item.value.estimateHours <= item.value.usedHours ? 'done' : ''}}"></list-item>
 		</template>
 		<template if="{{totalItemsCount == 0}}">
 			<template if="{{!isAllDone}}">
@@ -43,6 +54,25 @@
 				postponedItemsCount: 0,
 				doneItemsCount: 0,
 				totalItemsCount: 0,
+				
+				publish: {
+					type: "today"
+				},
+				
+				typeChanged: function() {
+					console.log(this.type);
+					switch (this.type) {
+						case "today":
+							this.fetchTodaysTaskList();
+							break;
+						case "week":
+							this.fetchWeeksTaskList();
+							break;
+						case "archive":
+							this.fetchAllTasks();
+							break;
+					}
+				},
 								
 				created: function() {
 					var self = this;
@@ -56,19 +86,52 @@
 						self.saveDone_.apply(self, arguments);
 					};
 					
-					this.fetchTodaysTaskList();
+					this.typeChanged();
+				},
+				
+				updateTotalItemsCount: function() {
+					this.totalItemsCount = this.items.length - this.postponedItemsCount - this.doneItemsCount;
 				},
 				
 				itemsChanged: function() {
-					this.totalItemsCount = this.items.length - this.postponedItemsCount - this.doneItemsCount;
-					console.log(this.totalItemsCount);
+					this.postponedItemsCount = 0;
+					this.doneItemsCount = 0;
+					this.updateTotalItemsCount();
 				},
 				
 				postponedItemsCountChanged: function() {
-					this.itemsChanged();
+					this.updateTotalItemsCount();
 				},
 				doneItemsCountChanged: function() {
-					this.itemsChanged();
+					this.updateTotalItemsCount();
+				},
+				
+				/**
+				 * Fetch today's tasklist.
+				 */
+				fetchAllTasks: function() {
+					var self = this;
+					app.db.todo.list(function(err, resp) {
+							console.log(err);
+						if (err) {
+							throw err;
+						}
+						self.items = resp.rows;
+					});
+				},
+				
+				/**
+				 * Fetch today's tasklist.
+				 */
+				fetchWeeksTaskList: function() {
+					var self = this;
+					app.db.todo.listWeeksTasks(function(err, resp) {
+							console.log(err);
+						if (err) {
+							throw err;
+						}
+						self.items = resp.rows;
+					});
 				},
 				
 				/**
@@ -77,6 +140,7 @@
 				fetchTodaysTaskList: function() {
 					var self = this;
 					app.db.todo.listTodaysTasks(function(err, resp) {
+							console.log(resp);
 						if (err) {
 							throw err;
 						}
@@ -140,7 +204,7 @@
 						}
 						callback({
 							success: true,
-							message: "Great! <i>" + item.value.caption + "</i> done.<br><br>" + 
+							message: "Great! <i>" + item.value.caption + "</i> " + (item.value.usedHours/item.value.estimateHours) + "% done.<br><br>" + 
 								(self.items.length - 1) + " more tasks for today."
 						});
 						self.doneItemsCount++;

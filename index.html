@@ -6,6 +6,17 @@
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no">
 		
+		<link rel="apple-touch-icon" href="icon.png">
+		<link rel="apple-touch-startup-image" href="startup.png">
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+		
+		<meta name="mobile-web-app-capable" content="yes">
+		
+		<link rel="icon" sizes="192x192" href="icon-192.png">
+		
+		<link rel="manifest" href="manifest.json">
+		
 		<!-- libs -->
 		<script src="node_modules/pouchdb/dist/pouchdb.min.js"></script>
 		<script src="bower_components/webcomponentsjs/webcomponents.min.js"></script>
@@ -36,6 +47,12 @@
 			#page { max-width: 720px; margin: 0 auto; padding: 1em; box-sizing: border-box; }
 			
 			#page-inner { position: relative; }
+			
+			#splash { z-index: 999; position: fixed; left: 0; top: 0; right: 0; bottom: 0; background-color: #fafafa; 
+				background-image: url("img/logo-big.png"); background-size: auto 200px; background-position: center center; 
+				background-repeat: no-repeat; opacity: 1; transition: 0.5s all; }
+			
+			#splash.hide { opacity: 0; }
 
 			@media screen and (min-width: 720px) {
 				body { padding: 1em; box-sizing: border-box; }
@@ -44,6 +61,8 @@
 		</style>
 	</head>
 	<body>
+		
+		<div id="splash"></div>
 		
 		<div id="page">
 			<div id="page-inner">
@@ -55,6 +74,14 @@
 			(function() {
 				
 				var switcher = document.querySelector("#switcher");
+				var splash = document.querySelector("#splash");
+				
+				setTimeout(function() {
+					splash.classList.add("hide");
+					setTimeout(function() {
+						splash.style.display = "none";
+					}, 1000);
+				}, 1000);
 				
 			})();
 		</script>

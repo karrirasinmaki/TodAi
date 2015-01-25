@@ -45,7 +45,7 @@
 			</div>
 		</div>
 		<template if="{{!showSwipeStatus}}">
-			<div on-tap="{{onTap}}" touch-action="pan-y" 
+			<div on-tap="{{onTap}}" touch-action="pan-x" 
 				 on-trackstart="{{onTrackStart}}" on-trackend="{{onTrackEnd}}" on-track="{{trackPointer}}" 
 				 style="transform: translateX({{moveX}}px)"
 				 class="list-item hours-{{hours}} transition-{{pointerDown ? 'off' : 'on'}}" >

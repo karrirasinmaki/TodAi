@@ -12,14 +12,14 @@
 			input, textarea, select { width: 100%; box-sizing: border-box; padding: 0.3em 0.2em; border: 2px solid #00a99d; }
 			.input-row { margin: 1em 0; }
 			
-			#wrapper { overflow: hidden; background: #fafafa; border: 2px solid #00a99d; transition: 0.5s height; }
-			#wrapper.collapse { height: 0px!important; }
+			#wrapper { overflow: hidden; background: #fafafa; border: 2px solid #00a99d; opacity: 1; transform: scaleY(1) translateY(0px); transform-origin: center top; transition: 0.5s all; }
+			#wrapper.collapse { opacity: 0; transform: scaleY(0) translateY(-300px);}
 			
 			#theform { margin: 0.4em; }
 			
 			.link { text-decoration: underline; }
 		</style>
-		<div id="wrapper">
+		<div id="wrapper" class="collapse">
 			<form id="theform" on-submit="{{preventSubmit}}">
 				<div class="input-row">
 					<label>Caption</label>
@@ -34,9 +34,15 @@
 					<textarea rows="5" placeholder="Notes" value="{{item.notes}}"></textarea>
 				</div>
 				<div class="input-row">
-					<label>Hour budget</label>
-					<input type="number" value="{{item.estimateHours}}" placeholder="Hour budget">
+					<label>Hour estimate</label>
+					<input type="number" value="{{item.estimateHours}}" placeholder="Hour estimate">
 				</div>
+				<template if="{{!isNew}}">
+					<div class="input-row">
+						<label>Used hours</label>
+						<input type="number" value="{{item.usedHours}}" placeholder="Hour budget" disabled>
+					</div>
+				</template>
 				<div class="input-row">
 					<label>Repeat</label>
 					<select value="{{item.repeat}}">
@@ -67,7 +73,7 @@
 						<add-new-task text="{{item._id ? 'Save task' : 'Add new task +'}}" on-tap="{{saveItem}}"></add-new-task>
 					</div>
 				</div>
-				<template if="{{item._id}}">
+				<template if="{{!isNew}}">
 					<div>
 						<span class="link" on-tap="{{deleteItem}}">Delete</span>
 					</div>
@@ -87,6 +93,10 @@
 				},
 				
 				isValid: false,
+				
+				get isNew() {
+					return this.item._id ? false : true;
+				},
 				
 				get deadlineDateString() {
 					var isoString = new Date(this.item.deadline).toISOString();
@@ -112,10 +122,6 @@
 					self.setWrapperHeight();
 				},
 				
-				setWrapperHeight: function() {
-					this.$.wrapper.style.height = this.$.wrapper.offsetHeight + "px";
-				},
-				
 				created: function() {
 					var self = this;
 					
@@ -125,13 +131,7 @@
 				
 				domReady: function() {
 					var self = this;
-					self.$.wrapper.style.visibility = "hidden";
-					self.setWrapperHeight();
-					self.$.wrapper.classList.add("collapse");
-					setTimeout(function() {
-						self.$.wrapper.style.visibility = "visible";
-						self.$.wrapper.classList.remove("collapse");
-					}, 100);
+					self.$.wrapper.classList.remove("collapse");
 				},
 				
 				preventSubmit: function(evt) {

@@ -14,30 +14,32 @@
 			Loading tasks...
 		</template>
 		<template if="{{!isLoading}}">
-			<!-- Today -->
-			<template if="{{type == 'today'}}">
-				<template repeat="{{item in items}}">
-					<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}" 
-							   item="{{item}}" onPostpone="{{savePostpone}}" onDone="{{saveDone}}"></list-item>
+			<template if="{{totalItemsCount > 0}}">
+				<!-- Today -->
+				<template if="{{type == 'today'}}">
+					<template repeat="{{item in items}}">
+						<list-item caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.hours}}" href="/todos/{{item.id}}" 
+								   item="{{item}}" onPostpone="{{savePostpone}}" onDone="{{saveDone}}"></list-item>
+					</template>
+					<p><i>Swipe right to postpone, left to mark as done.</i></p>
 				</template>
-				<p><i>Swipe right to postpone, left to mark as done.</i></p>
-			</template>
-			
-			<!-- Week -->
-			<template if="{{type == 'week'}}">
-				<p><i>Preview of the upcoming week</i></p>
-				<template repeat="{{item in items}}">
-					<list-item disableTrack="{{true}}" caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.usedHours}}/{{item.value.estimateHours}}" 
-							   item="{{item}}" href="/todos/{{item.id}}"></list-item>
+
+				<!-- Week -->
+				<template if="{{type == 'week'}}">
+					<p><i>Preview of the upcoming week</i></p>
+					<template repeat="{{item in items}}">
+						<list-item disableTrack="{{true}}" caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.usedHours}}/{{item.value.estimateHours}}" 
+								   item="{{item}}" href="/todos/{{item.id}}"></list-item>
+					</template>
 				</template>
-			</template>
-			
-			<!-- Archive -->
-			<template if="{{type == 'archive'}}">
-				<p><i>All tasks, upcoming and past</i></p>
-				<template repeat="{{item in items}}">
-					<list-item disableTrack="{{true}}" caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.usedHours}}/{{item.value.estimateHours}}" 
-							   item="{{item}}" href="/todos/{{item.id}}" class="{{item.value.estimateHours <= item.value.usedHours ? 'done' : ''}}"></list-item>
+
+				<!-- Archive -->
+				<template if="{{type == 'archive'}}">
+					<p><i>All tasks, upcoming and past</i></p>
+					<template repeat="{{item in items}}">
+						<list-item disableTrack="{{true}}" caption="{{item.value.caption}}" text="{{item.value.description}}" hours="{{item.value.usedHours}}/{{item.value.estimateHours}}" 
+								   item="{{item}}" href="/todos/{{item.id}}" class="{{item.value.estimateHours <= item.value.usedHours ? 'done' : ''}}"></list-item>
+					</template>
 				</template>
 			</template>
 			
@@ -45,7 +47,7 @@
 				<template if="{{!isAllDone}}">
 					<h3>Seems like today's tasks are done!</h3>
 					<p>
-						Get yourself some rest, 
+						Give yourself some rest, 
 						you have deserved it!
 					</p>
 					<a href="#" on-tap="{{fetchNewTodaysTaskList}}">No! Give me more things to do!</a>
@@ -53,7 +55,7 @@
 				<template if="{{isAllDone}}">
 					<h3>You are super!</h3>
 					<p>
-						There is absolutely nothing to do anymore. Add some 
+						There is absolutely nothing to do anymore. Why not add some 
 						new tasks and keep youself busy!
 					</p>
 				</template>
@@ -62,6 +64,8 @@
 	</template>
 	<script>
 		(function(app) {
+			
+			app.db.todo.dateOfList(function(){});
 			
 			function isDateToday(dateString) {
 				var date = new Date(dateString);
@@ -230,10 +234,17 @@
 						if (err) {
 							return;
 						}
+						var percentage = Math.round((item.value.usedHours / item.value.estimateHours) * 100) / 100;
+						var messageDonePart = "";
+						if (item.value.repeat > 0) {
+							messageDonePart = "<i>" + item.value.caption + "</i> done for now.";
+						}
+						else {
+							messageDonePart = "<i>" + item.value.caption + "</i> " + percentage + "% done.";
+						}
 						callback({
 							success: true,
-							message: "Great! <i>" + item.value.caption + "</i> " + (item.value.usedHours/item.value.estimateHours) + "% done.<br><br>" + 
-								(self.items.length - 1) + " more tasks for today."
+							message: messageDonePart + "<br><br>" + (self.items.length - 1) + " more tasks for today."
 						});
 						self.doneItemsCount++;
 					});
